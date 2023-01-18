@@ -16,7 +16,7 @@ class FullyConnectedLayer(Layer):
         return {'w': self.w, 'b': self.b}
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return {}
 
     def forward(self, x):
         y = x @ self.w.T + self.b
@@ -101,10 +101,10 @@ class Sigmoid(Layer):
     """
 
     def get_parameters(self):
-        raise NotImplementedError()
+        return {}
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return {}
 
     def forward(self, x):
         y = 1 / (1 + np.exp(-x))
@@ -120,10 +120,10 @@ class ReLU(Layer):
     """
 
     def get_parameters(self):
-        raise NotImplementedError()
+        return {}
 
     def get_buffers(self):
-        raise NotImplementedError()
+        return {}
 
     def forward(self, x):
         y = np.maximum(x, 0)
