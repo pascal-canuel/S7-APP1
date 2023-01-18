@@ -42,7 +42,6 @@ class BatchNormalization(Layer):
 
         self.global_mean = np.zeros(input_count)
         self.global_variance = np.zeros(input_count)
-        self.global_set = False
 
         self.eps = np.finfo(float).eps
 
@@ -66,29 +65,32 @@ class BatchNormalization(Layer):
         mean = np.mean(x, axis=0)
         var = np.var(x, axis=0)
 
-        if not self.global_set:
-            self.global_mean = mean
-            self.global_variance = var
-            self.global_set = True
-        else:
-            self.global_mean = (1 - self.alpha) * self.global_mean + self.alpha * mean
-            self.global_variance = (1 - self.alpha) * self.global_variance + self.alpha * var
+        self.global_mean = (1 - self.alpha) * self.global_mean + self.alpha * mean
+        self.global_variance = (1 - self.alpha) * self.global_variance + self.alpha * var
 
-        x_norm = (x - self.global_mean) / np.sqrt(self.global_variance + self.eps)
+        x_norm = (x - mean) / np.sqrt(var + self.eps)
         y = self.gamma * x_norm + self.beta
 
-        return y, {'x_norm': x_norm}
+        return y, {'x': x, 'x_norm': x_norm, 'mean_b': mean, 'var_b': var}
 
     def _forward_evaluation(self, x):
         x_norm = (x - self.global_mean) / np.sqrt(self.global_variance + self.eps)
         y = self.gamma * x_norm + self.beta
 
-        return y, {'x_norm': x_norm}
+        return y, {'x': x, 'x_norm': x_norm}
 
     def backward(self, output_grad, cache):
-        input_grad = output_grad * self.gamma
-        gamma_grad = np.sum(output_grad) * cache['x_norm']
-        beta_grad = np.sum(output_grad)
+        M = output_grad.shape[0]
+
+        x_norm_grad = output_grad * self.gamma
+
+        var_grad = np.sum(x_norm_grad * (cache['x'] - cache['mean_b']) * (-1/2 * np.power((cache['var_b'] + self.eps), -3/2)), axis=0)
+        mean_grad = (-np.sum(x_norm_grad, axis=0) / np.sqrt(cache['var_b'] + self.eps)) + (-2/M * var_grad * np.sum(cache['x'] - cache['mean_b'], axis=0))
+
+        input_grad = (x_norm_grad / np.sqrt(cache['var_b'] + self.eps)) + (2/M * var_grad * (cache['x'] - cache['mean_b'])) + (1/M * mean_grad)
+
+        gamma_grad = np.sum(output_grad * cache['x_norm'], axis=0)
+        beta_grad = np.sum(output_grad, axis=0)
 
         return input_grad, {'gamma': gamma_grad, 'beta': beta_grad}
 

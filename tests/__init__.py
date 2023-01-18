@@ -66,6 +66,8 @@ def test_layer_parameter_grad(layer, input_shape, parameter_name, delta=DELTA):
 
         it.iternext()
 
+    print('analytical:', analytical_grad)
+    print('numerical:', numerical_grad)
     error = np.mean(np.abs(analytical_grad - numerical_grad))
     print(inspect.stack()[1][3], '-', parameter_name, '- Absolute mean error:', error)
     return error < MAX_GRAD_MEAN_ERROR
