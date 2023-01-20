@@ -19,7 +19,9 @@ class CrossEntropyLoss(Loss):
         y_estimate = softmax(x)
 
         loss = -np.sum(y_target * np.log(y_estimate)) / x.shape[0]
-        input_grad = softmax_simplified_backward(y_estimate, target)
+        output_grad = -y_target/y_estimate
+        input_grad = softmax_backward(y_estimate, output_grad)
+        # input_grad = softmax_simplified_backward(y_estimate, target)
 
         return loss, input_grad
 
@@ -33,6 +35,28 @@ def softmax(x):
 
     return y
 
+
+def softmax_backward(y, output_grad):
+    n_samples = y.shape[0]
+    n_output = y.shape[1]
+    D = np.zeros((n_samples, n_output, n_output))
+
+    for b in range(n_samples):
+        for i in range(n_output):
+            for j in range(n_output):
+                if i != j:
+                    D[b][i][j] = -y[b][i] * y[b][j]
+                else:
+                    D[b][i][j] = y[b][j] * (1 - y[b][j])
+
+    input_grad = np.zeros_like(output_grad)
+
+    for b in range(n_samples):
+        input_grad[b] = output_grad[b] @ D[b]
+
+    input_grad /= n_samples
+
+    return input_grad
 
 def softmax_simplified_backward(y, target):
     mask = np.zeros_like(y)
