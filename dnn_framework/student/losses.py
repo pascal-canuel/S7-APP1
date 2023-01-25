@@ -58,6 +58,7 @@ def softmax_backward(y, output_grad):
 
     return input_grad
 
+
 def softmax_simplified_backward(y, target):
     mask = np.zeros_like(y)
     mask[np.arange(len(y)), target] = 1

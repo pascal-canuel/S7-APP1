@@ -127,8 +127,8 @@ class ReLU(Layer):
 
     def forward(self, x):
         y = np.maximum(x, 0)
-        return y, {'y': y}
+        return y, {'x': x}
 
     def backward(self, output_grad, cache):
-        d_y = np.where(cache['y'] > 0, 1, 0) * output_grad
+        d_y = np.where(cache['x'] > 0, 1, 0) * output_grad
         return d_y, {}
